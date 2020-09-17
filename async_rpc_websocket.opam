@@ -10,7 +10,7 @@ build: [
   ["dune" "build" "-p" name "-j" jobs]
 ]
 depends: [
-  "ocaml" {>= "4.07.0"}
+  "ocaml" {>= "4.08.0"}
   "async_rpc_kernel"
   "cohttp_async_websocket"
   "ppx_jane"
