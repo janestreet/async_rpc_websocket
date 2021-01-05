@@ -1,7 +1,4 @@
----
-title: How not to multiplex RPC
-uuid: d9be3039-17b3-3d3f-236a-cd25a6c0149d
----
+# How not to multiplex RPC
 
 # Goal
 
