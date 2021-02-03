@@ -1,3 +1,2 @@
-(library (name rpc_websocket_bench)
- (preprocess (pps ppx_jane -annotated-ignores -check-doc-comments))
+(library (name rpc_websocket_bench) (preprocess (pps ppx_jane))
  (libraries async core cohttp_async_websocket rpc_websocket))
