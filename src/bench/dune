@@ -1,2 +1,2 @@
 (library (name rpc_websocket_bench) (preprocess (pps ppx_jane))
- (libraries async core cohttp_async_websocket rpc_websocket))
+ (libraries async core_kernel.core cohttp_async_websocket rpc_websocket))
