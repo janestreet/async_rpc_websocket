@@ -241,11 +241,13 @@ let%test_module "TCP vs Websocket Pipe Pushback" =
              raise_s [%message "Expected some pushback" (kind : Transport.Kind.t)])
     ;;
 
-    let%expect_test "TCP Pushback" =
-      let%bind () = test_transport Transport.Kind.Tcp in
-      [%expect {| |}];
-      return ()
-    ;;
+    module Disable_this_test () = struct
+      let%expect_test "TCP Pushback" =
+        let%bind () = test_transport Transport.Kind.Tcp in
+        [%expect {| |}];
+        return ()
+      ;;
+    end
 
     let%expect_test "Websocket Pushback" =
       let%bind () = test_transport Transport.Kind.Websocket in
