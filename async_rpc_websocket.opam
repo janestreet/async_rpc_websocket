@@ -14,7 +14,7 @@ depends: [
   "async_rpc_kernel"
   "cohttp_async_websocket"
   "ppx_jane"
-  "cohttp-async"           {>= "2.5.6"}
+  "cohttp-async"           {>= "2.5.6" & < "3.0.0" | >= "5.0.0"}
   "dune"                   {>= "2.0.0"}
 ]
 synopsis: "Library to serve and dispatch Async RPCs over websockets"
