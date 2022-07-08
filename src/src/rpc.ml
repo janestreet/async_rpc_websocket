@@ -42,10 +42,11 @@ type ('s, 'c, 'r) common_args =
         -> Rpc.Connection.t
         -> 's)
   -> ?http_handler:('c -> http_handler)
-  -> ?handshake_timeout:Time.Span.t
+  -> ?handshake_timeout:Time_float.Span.t
   -> ?heartbeat_config:Rpc.Connection.Heartbeat_config.t
   -> ?should_process_request:should_process_request
-  -> ?on_handshake_error:Rpc.Connection.on_handshake_error
+  -> ?on_handshake_error:
+       [ `Raise | `Ignore | `Call of Socket.Address.Inet.t -> exn -> unit ]
   -> 'r
 
 type ('s, 'r, 'l) serve_args =
@@ -109,7 +110,7 @@ let handler
         (match on_handshake_error with
          | `Ignore -> ()
          | `Raise -> raise handshake_error
-         | `Call func -> func handshake_error);
+         | `Call func -> func inet handshake_error);
         return ()
     in
     Rpc.Transport.close transport

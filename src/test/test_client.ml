@@ -55,7 +55,7 @@ let%expect_test "roundtrip a string over websockets" =
       String.substr_replace_all atom ~pattern:port_str ~with_:"PORT")
   in
   [%test_result: string] ~expect:string_sent got;
-  let%bind output = [%expect.output] in
+  let output = [%expect.output] in
   print_s (sanitize_port (Sexp.of_string output));
   [%expect
     {|
@@ -65,5 +65,6 @@ let%expect_test "roundtrip a string over websockets" =
         (origin ws://localhost:PORT) (sec-websocket-key n6INw7ch3mJP8/EK54zJFw==)
         (sec-websocket-version 13) (upgrade websocket)
         (user-agent ocaml-cohttp/1.0.2)))
-      (meth GET) (resource /) (version HTTP_1_1) (encoding Unknown))) |}]
+      (meth GET) (resource /) (version HTTP_1_1) (encoding Unknown))) |}];
+  return ()
 ;;

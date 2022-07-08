@@ -220,7 +220,7 @@ let%test_module "TCP vs Websocket Pipe Pushback" =
       let arbitrary_large_number_that_seems_to_induce_pushback = 250_000 in
       List.init arbitrary_large_number_that_seems_to_induce_pushback ~f:(const ())
       |> List.iter ~f:(fun () -> Pipe.write_without_pushback server_pipe_writer "");
-      let this_was_long_enough_to_witness_real_pushback = Time.Span.of_sec 5. in
+      let this_was_long_enough_to_witness_real_pushback = Time_float.Span.of_sec 5. in
       match%map
         Clock.with_timeout
           this_was_long_enough_to_witness_real_pushback

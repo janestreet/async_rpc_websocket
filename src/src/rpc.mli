@@ -48,12 +48,13 @@ type ('s, 'c, 'r) common_args =
   (** [http_handler] describes how to handle non-websocket HTTP requests.
       Defaults to always returning code 501, (for servers that are only serving web
       sockets and no other resources via HTTP) *)
-  -> ?handshake_timeout:Time.Span.t
+  -> ?handshake_timeout:Time_float.Span.t
   -> ?heartbeat_config:Async.Rpc.Connection.Heartbeat_config.t
   -> ?should_process_request:should_process_request
   (** [should_process_request] allows the user to deny access for a given request, before
       handling any RPCs, or serving web requests from a client *)
-  -> ?on_handshake_error:Async.Rpc.Connection.on_handshake_error
+  -> ?on_handshake_error:
+       [ `Ignore | `Raise | `Call of Socket.Address.Inet.t -> Exn.t -> unit ]
   (** default is [`Ignore] *)
   -> 'r
 
