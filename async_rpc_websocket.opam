@@ -17,6 +17,7 @@ depends: [
   "cohttp-async"           {>= "2.5.6" & < "3.0.0" | >= "5.0.0"}
   "dune"                   {>= "2.0.0"}
 ]
+available: arch != "arm32" & arch != "x86_32"
 synopsis: "Library to serve and dispatch Async RPCs over websockets"
 description: "
 Library to serve and dispatch Async RPCs over websockets.

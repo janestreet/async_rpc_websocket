@@ -1,56 +1,7 @@
 open! Core
 open! Async
 open! Import
-
-module Query_and_response = struct
-  type t = unit [@@deriving bin_io, sexp]
-end
-
-let rpc : (Query_and_response.t, Query_and_response.t) Rpc.Rpc.t =
-  Rpc.Rpc.create
-    ~name:"test"
-    ~version:0
-    ~bin_query:Query_and_response.bin_t
-    ~bin_response:Query_and_response.bin_t
-;;
-
-let implementations =
-  Rpc.Implementations.create_exn
-    ~on_unknown_rpc:`Raise
-    ~implementations:
-      [ Rpc.Rpc.implement rpc (fun () () ->
-          print_s [%message "got query"];
-          Deferred.unit)
-      ]
-;;
-
-let send_websocket_request port =
-  let%bind (_ : Cohttp_async.Response.t), reader, writer =
-    let uri = Uri.make ~host:"localhost" ~port () in
-    Cohttp_async_websocket.Client.create uri |> Deferred.Or_error.ok_exn
-  in
-  let%bind reader = Reader.of_pipe (Info.of_string "websocket-reader") reader in
-  let%bind writer, `Closed_and_flushed_downstream on_close =
-    Writer.of_pipe (Info.of_string "websocket-writer") writer
-  in
-  let transport =
-    let max_message_size = Byte_units.(bytes_int_exn (of_megabytes 100.)) in
-    Rpc.Transport.of_reader_writer ~max_message_size reader writer
-  in
-  don't_wait_for
-    (let%bind () = Deferred.ignore_m on_close in
-     let%map () = Writer.close writer
-     and () = Rpc.Transport.close transport in
-     ());
-  Async_rpc_kernel.Rpc.Connection.with_close
-    ~connection_state:(const ())
-    transport
-    ~dispatch_queries:(fun conn ->
-      Deferred.Or_error.ignore_m (Rpc.Rpc.dispatch rpc conn ()))
-    ~on_handshake_error:`Raise
-;;
-
-let do_not_perform_global_logging () = Log.Global.set_output []
+open Test_server_utils
 
 let%expect_test "serve_with_tcp_server" =
   do_not_perform_global_logging ();
@@ -79,7 +30,7 @@ let%expect_test "serve_with_tcp_server" =
     |> Deferred.Or_error.ok_exn
   in
   [%expect {| "got query" |}];
-  let%bind () = send_websocket_request web_port >>| ok_exn in
+  let%bind () = send_websocket_request ~port:web_port >>| ok_exn in
   [%expect {| "got query" |}];
   return ()
 ;;
@@ -181,18 +132,11 @@ let%test_module "TCP vs Websocket Pipe Pushback" =
               ()
           in
           let port = Cohttp_async.Server.listening_on server in
-          let%bind (_ : Cohttp_async.Response.t), reader, writer =
+          let%bind (_ : Cohttp_async.Response.t), websocket =
             let uri = Uri.make ~host:"localhost" ~port () in
             Cohttp_async_websocket.Client.create uri |> Deferred.Or_error.ok_exn
           in
-          let%bind reader = Reader.of_pipe (Info.of_string "websocket-reader") reader in
-          let%bind writer, (_ : [ `Closed_and_flushed_downstream of unit Deferred.t ]) =
-            Writer.of_pipe (Info.of_string "websocket-writer") writer
-          in
-          let transport =
-            let max_message_size = Byte_units.(bytes_int_exn (of_megabytes 100.)) in
-            Rpc.Transport.of_reader_writer ~max_message_size reader writer
-          in
+          let transport = Websocket.transport websocket in
           Async_rpc_kernel.Rpc.Connection.create ~connection_state:(const ()) transport
           |> ok_exn_result
       ;;

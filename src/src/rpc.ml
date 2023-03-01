@@ -1,6 +1,5 @@
 open Core
 open Async
-module Pipe_transport = Async_rpc_kernel.Pipe_transport
 
 module Connection_source = struct
   type 'a t =
@@ -33,88 +32,17 @@ type should_process_request =
   -> (Cohttp.Header.t * [ `is_websocket_request of bool ]) Connection_source.t
   -> unit Or_error.t
 
-type ('s, 'c, 'r) common_args =
-  implementations:'s Rpc.Implementations.t
-  -> initial_connection_state:
-       ('c
-        -> Connection_initiated_from.t
-        -> Socket.Address.Inet.t
-        -> Rpc.Connection.t
-        -> 's)
-  -> ?http_handler:('c -> http_handler)
-  -> ?handshake_timeout:Time_float.Span.t
-  -> ?heartbeat_config:Rpc.Connection.Heartbeat_config.t
-  -> ?should_process_request:should_process_request
-  -> ?on_handshake_error:
-       [ `Raise | `Ignore | `Call of Socket.Address.Inet.t -> exn -> unit ]
-  -> 'r
-
-type ('s, 'r, 'l) serve_args =
-  where_to_listen:(Socket.Address.Inet.t, 'l) Tcp.Where_to_listen.t
-  -> ( 's
-     , unit
-     , ?on_handler_error:
-       [ `Raise | `Ignore | `Call of Socket.Address.Inet.t -> exn -> unit ]
-     -> ?mode:Conduit_async.server
-     -> ?backlog:int
-     -> ?max_connections:int
-     -> unit
-     -> 'r )
-       common_args
-
 type 'l tcp_server = (Socket.Address.Inet.t, 'l) Tcp.Server.t Deferred.t
 type 'l ws_server = (Socket.Address.Inet.t, 'l) Cohttp_async.Server.t Deferred.t
 
 let default_http_handler _ ~body:_ _ _ = Cohttp_async.Server.respond (`Code 501)
 
-let handler
-      ?(description = Info.of_string "HTTP (WS) server")
-      ~implementations
-      ~initial_connection_state
-      ?(http_handler = default_http_handler)
-      ?handshake_timeout
-      ?heartbeat_config
+let handler_common
       ?should_process_request
-      ?(on_handshake_error = `Ignore)
+      ?(http_handler = default_http_handler)
       extra_info
+      f
   =
-  let ws_handler
-        client_identity
-        ~inet
-        ~subprotocol:(_ : string option)
-        request
-        reader
-        writer
-    =
-    let connection_state =
-      initial_connection_state
-        client_identity
-        (Connection_initiated_from.Websocket_request request)
-        inet
-    in
-    let transport = Pipe_transport.create Pipe_transport.Kind.string reader writer in
-    let%bind connection =
-      Async_rpc_kernel.Rpc.Connection.create
-        ?handshake_timeout:
-          (Option.map handshake_timeout ~f:Time_ns.Span.of_span_float_round_nearest)
-        ?heartbeat_config
-        ~implementations
-        ~description
-        ~connection_state
-        transport
-    in
-    let%bind () =
-      match connection with
-      | Ok connection -> Rpc.Connection.close_finished connection
-      | Error handshake_error ->
-        (match on_handshake_error with
-         | `Ignore -> ()
-         | `Raise -> raise handshake_error
-         | `Call func -> func inet handshake_error);
-        return ()
-    in
-    Rpc.Transport.close transport
-  in
   let should_process_request =
     Option.map
       should_process_request
@@ -129,7 +57,51 @@ let handler
       ~non_ws_request:(http_handler extra_info)
       ?should_process_request
       (fun ~inet ~subprotocol request ->
-         return (On_connection.create (ws_handler extra_info ~inet ~subprotocol request))))
+         return
+           (On_connection.create (fun websocket ->
+              let transport = Websocket.transport websocket in
+              let%bind () = f ~inet ~subprotocol request transport in
+              Rpc.Transport.close transport))))
+;;
+
+let handler
+      ?(description = Info.of_string "HTTP (WS) server")
+      ~implementations
+      ~initial_connection_state
+      ?http_handler
+      ?handshake_timeout
+      ?heartbeat_config
+      ?should_process_request
+      ?(on_handshake_error = `Ignore)
+      extra_info
+  =
+  let ws_handler ~inet ~subprotocol:(_ : string option) request transport =
+    let connection_state =
+      initial_connection_state
+        extra_info
+        (Connection_initiated_from.Websocket_request request)
+        inet
+    in
+    let%bind connection =
+      Async_rpc_kernel.Rpc.Connection.create
+        ?handshake_timeout:
+          (Option.map handshake_timeout ~f:Time_ns.Span.of_span_float_round_nearest)
+        ?heartbeat_config
+        ~implementations
+        ~description
+        ~connection_state
+        transport
+    in
+    match connection with
+    | Ok connection -> Rpc.Connection.close_finished connection
+    | Error handshake_error ->
+      (match on_handshake_error with
+       | `Ignore -> ()
+       | `Raise -> raise handshake_error
+       | `Call func -> func inet handshake_error);
+      return ()
+  in
+  handler_common ?should_process_request ?http_handler extra_info ws_handler
 ;;
 
 let serve
@@ -245,7 +217,42 @@ let connection_create ?handshake_timeout ?heartbeat_config transport =
 
 let client ?headers ?handshake_timeout ?heartbeat_config uri =
   let open Deferred.Or_error.Let_syntax in
-  let%bind _resp, reader, writer = Cohttp_async_websocket.Client.create ?headers uri in
-  let transport = Pipe_transport.create Pipe_transport.Kind.string reader writer in
+  let%bind _resp, websocket = Cohttp_async_websocket.Client.create ?headers uri in
+  let transport = Websocket.transport websocket in
   connection_create ?handshake_timeout ?heartbeat_config transport
 ;;
+
+module Transport = struct
+  type callback =
+    Socket.Address.Inet.t
+    -> Cohttp.Request.t
+    -> Async_rpc_kernel.Async_rpc_kernel_private.Transport.t
+    -> unit Deferred.t
+
+  let handler ?http_handler ?should_process_request callback extra_info =
+    let ws_handler ~inet ~subprotocol:(_ : string option) request transport =
+      callback inet request transport
+    in
+    handler_common ?http_handler ?should_process_request extra_info ws_handler
+  ;;
+
+  let serve
+        ~where_to_listen
+        ?http_handler
+        ?should_process_request
+        ?(on_handler_error = `Ignore)
+        ?mode
+        ?backlog
+        ?max_connections
+        callback
+    =
+    let handler = handler ?http_handler ?should_process_request callback () in
+    Cohttp_async.Server.create_expert
+      ?max_connections
+      ?backlog
+      ~on_handler_error
+      ?mode
+      where_to_listen
+      handler
+  ;;
+end
