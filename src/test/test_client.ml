@@ -25,9 +25,10 @@ let serve () =
     ~where_to_listen:Tcp.Where_to_listen.of_port_chosen_by_os
     ~implementations
     ~initial_connection_state:
-      (fun () initiated_from (_ : Socket.Address.Inet.t) (_ : Rpc.Connection.t) ->
-         print_s [%sexp (initiated_from : Rpc_websocket.Rpc.Connection_initiated_from.t)];
-         ())
+      (fun
+        () initiated_from (_ : Socket.Address.Inet.t) (_ : Rpc.Connection.t) ->
+        print_s [%sexp (initiated_from : Rpc_websocket.Rpc.Connection_initiated_from.t)];
+        ())
     ()
 ;;
 

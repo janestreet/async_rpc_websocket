@@ -10,10 +10,12 @@ let%expect_test "serve_with_tcp_server" =
       ~where_to_listen_for_tcp:Tcp.Where_to_listen.of_port_chosen_by_os
       ~where_to_listen:Tcp.Where_to_listen.of_port_chosen_by_os
       ~initial_connection_state:
-        (fun ()
+        (fun
+          ()
           (_ : Rpc_websocket.Rpc.Connection_initiated_from.t)
           (_ : Socket.Address.Inet.t)
-          (_ : Rpc.Connection.t) -> ())
+          (_ : Rpc.Connection.t)
+          -> ())
       ~implementations
       ()
   in
@@ -124,10 +126,12 @@ let%test_module "TCP vs Websocket Pipe Pushback" =
             Rpc_websocket.Rpc.serve
               ~where_to_listen:Tcp.Where_to_listen.of_port_chosen_by_os
               ~initial_connection_state:
-                (fun ()
+                (fun
+                  ()
                   (_ : Rpc_websocket.Rpc.Connection_initiated_from.t)
                   (_ : Socket.Address.Inet.t)
-                  (_ : Rpc.Connection.t) -> ())
+                  (_ : Rpc.Connection.t)
+                  -> ())
               ~implementations
               ()
           in
