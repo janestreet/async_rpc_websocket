@@ -14,7 +14,7 @@ depends: [
   "async_rpc_kernel"
   "cohttp_async_websocket"
   "ppx_jane"
-  "cohttp-async"           {>= "2.5.7" & < "3.0.0" | >= "5.0.1" & < "6.0.0"}
+  "cohttp-async"           {>= "2.5.7" & < "3.0.0" | >= "5.1.1" & < "6.0.0"}
   "dune"                   {>= "2.0.0"}
 ]
 available: arch != "arm32" & arch != "x86_32"
