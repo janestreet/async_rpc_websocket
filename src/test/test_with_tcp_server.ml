@@ -71,7 +71,7 @@ let%test_module "TCP vs Websocket Pipe Pushback" =
           let pipe_r, pipe_w = Pipe.create () in
           Pipe.set_size_budget pipe_w 1;
           Pipe.set_size_budget pipe_r 1;
-          Ivar.fill ivar pipe_w;
+          Ivar.fill_exn ivar pipe_w;
           return (Ok pipe_r))
       in
       ( Ivar.read ivar
