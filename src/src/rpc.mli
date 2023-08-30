@@ -46,7 +46,6 @@ type 'l ws_server = (Socket.Address.Inet.t, 'l) Cohttp_async.Server.t Deferred.t
 
     - [on_handshake_error] defaults to [`Ignore]. *)
 
-
 (** This returns a http handler that can be added into an existing cohttp server *)
 val handler
   :  ?description:Info.t
@@ -64,7 +63,7 @@ val handler
   -> ?on_handshake_error:
        [ `Ignore | `Raise | `Call of Socket.Address.Inet.t -> Exn.t -> unit ]
   -> 'connection
-  (** The ['connection] argument allows a wrapper for [handler] to pass extra
+     (** The ['connection] argument allows a wrapper for [handler] to pass extra
       information to the [initial_connection_state] and [http_handler]
       callbacks. *)
   -> raw_http_handler

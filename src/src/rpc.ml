@@ -38,18 +38,18 @@ type 'l ws_server = (Socket.Address.Inet.t, 'l) Cohttp_async.Server.t Deferred.t
 let default_http_handler _ ~body:_ _ _ = Cohttp_async.Server.respond (`Code 501)
 
 let handler_common
-      ?should_process_request
-      ?(http_handler = default_http_handler)
-      extra_info
-      f
+  ?should_process_request
+  ?(http_handler = default_http_handler)
+  extra_info
+  f
   =
   let should_process_request =
     Option.map
       should_process_request
       ~f:(fun should_process_request inet header ~is_websocket_request ->
-        should_process_request
-          inet
-          (Connection_source.Web (header, `is_websocket_request is_websocket_request)))
+      should_process_request
+        inet
+        (Connection_source.Web (header, `is_websocket_request is_websocket_request)))
   in
   Cohttp_async_websocket.Server.(
     create
@@ -57,23 +57,23 @@ let handler_common
       ~non_ws_request:(http_handler extra_info)
       ?should_process_request
       (fun ~inet ~subprotocol request ->
-         return
-           (On_connection.create (fun websocket ->
-              let transport = Websocket.transport websocket in
-              let%bind () = f ~inet ~subprotocol request transport in
-              Rpc.Transport.close transport))))
+      return
+        (On_connection.create (fun websocket ->
+           let transport = Websocket.transport websocket in
+           let%bind () = f ~inet ~subprotocol request transport in
+           Rpc.Transport.close transport))))
 ;;
 
 let handler
-      ?(description = Info.of_string "HTTP (WS) server")
-      ~implementations
-      ~initial_connection_state
-      ?http_handler
-      ?handshake_timeout
-      ?heartbeat_config
-      ?should_process_request
-      ?(on_handshake_error = `Ignore)
-      extra_info
+  ?(description = Info.of_string "HTTP (WS) server")
+  ~implementations
+  ~initial_connection_state
+  ?http_handler
+  ?handshake_timeout
+  ?heartbeat_config
+  ?should_process_request
+  ?(on_handshake_error = `Ignore)
+  extra_info
   =
   let ws_handler ~inet ~subprotocol:(_ : string option) request transport =
     let connection_state =
@@ -105,19 +105,19 @@ let handler
 ;;
 
 let serve
-      ~where_to_listen
-      ~implementations
-      ~initial_connection_state
-      ?http_handler
-      ?handshake_timeout
-      ?heartbeat_config
-      ?should_process_request
-      ?on_handshake_error
-      ?(on_handler_error = `Ignore)
-      ?mode
-      ?backlog
-      ?max_connections
-      ()
+  ~where_to_listen
+  ~implementations
+  ~initial_connection_state
+  ?http_handler
+  ?handshake_timeout
+  ?heartbeat_config
+  ?should_process_request
+  ?on_handshake_error
+  ?(on_handler_error = `Ignore)
+  ?mode
+  ?backlog
+  ?max_connections
+  ()
   =
   let description =
     let info =
@@ -149,22 +149,22 @@ let serve
 ;;
 
 let serve_with_tcp_server
-      ~where_to_listen_for_tcp
-      ?max_message_size
-      ?make_transport
-      ~where_to_listen
-      ~implementations
-      ~initial_connection_state
-      ?http_handler
-      ?handshake_timeout
-      ?heartbeat_config
-      ?should_process_request
-      ?on_handshake_error
-      ?on_handler_error
-      ?mode
-      ?backlog
-      ?max_connections
-      ()
+  ~where_to_listen_for_tcp
+  ?max_message_size
+  ?make_transport
+  ~where_to_listen
+  ~implementations
+  ~initial_connection_state
+  ?http_handler
+  ?handshake_timeout
+  ?heartbeat_config
+  ?should_process_request
+  ?on_handshake_error
+  ?on_handler_error
+  ?mode
+  ?backlog
+  ?max_connections
+  ()
   =
   let ws_server =
     serve
@@ -237,14 +237,14 @@ module Transport = struct
   ;;
 
   let serve
-        ~where_to_listen
-        ?http_handler
-        ?should_process_request
-        ?(on_handler_error = `Ignore)
-        ?mode
-        ?backlog
-        ?max_connections
-        callback
+    ~where_to_listen
+    ?http_handler
+    ?should_process_request
+    ?(on_handler_error = `Ignore)
+    ?mode
+    ?backlog
+    ?max_connections
+    callback
     =
     let handler = handler ?http_handler ?should_process_request callback () in
     Cohttp_async.Server.create_expert

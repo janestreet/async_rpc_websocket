@@ -27,8 +27,8 @@ let serve () =
     ~initial_connection_state:
       (fun
         () initiated_from (_ : Socket.Address.Inet.t) (_ : Rpc.Connection.t) ->
-        print_s [%sexp (initiated_from : Rpc_websocket.Rpc.Connection_initiated_from.t)];
-        ())
+      print_s [%sexp (initiated_from : Rpc_websocket.Rpc.Connection_initiated_from.t)];
+      ())
     ()
 ;;
 
