@@ -63,7 +63,7 @@ let%expect_test "roundtrip a string over websockets" =
     (Websocket_request
      ((headers
        ((a-key a-value) (connection Upgrade) (host localhost:PORT)
-        (origin ws://localhost:PORT) (sec-websocket-key n6INw7ch3mJP8/EK54zJFw==)
+        (origin ws://localhost:PORT) (sec-websocket-key kGPoJPWMh8b7hp6I5XNmhQ==)
         (sec-websocket-version 13) (upgrade websocket)
         (user-agent ocaml-cohttp/1.0.2)))
       (meth GET) (resource /) (version HTTP_1_1) (encoding Unknown))) |}];
