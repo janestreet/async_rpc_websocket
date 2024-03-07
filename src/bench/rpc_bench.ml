@@ -3,7 +3,12 @@ open Async
 open Cohttp_async
 
 let rpc =
-  Rpc.Rpc.create ~name:"test" ~version:0 ~bin_query:bin_string ~bin_response:bin_string
+  Rpc.Rpc.create
+    ~name:"test"
+    ~version:0
+    ~bin_query:bin_string
+    ~bin_response:bin_string
+    ~include_in_error_count:Only_on_exn
 ;;
 
 let implementation : unit Rpc.Implementation.t = Rpc.Rpc.implement' rpc (const Fn.id)

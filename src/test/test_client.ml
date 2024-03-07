@@ -12,6 +12,7 @@ let rpc : (Query_and_response.t, Query_and_response.t) Rpc.Rpc.t =
     ~version:0
     ~bin_query:Query_and_response.bin_t
     ~bin_response:Query_and_response.bin_t
+    ~include_in_error_count:Only_on_exn
 ;;
 
 let implementations =
