@@ -201,7 +201,8 @@ let%test_module "TCP vs Websocket Pipe Pushback" =
       let%bind () = test_transport Transport.Kind.Websocket in
       [%expect
         {|
-        ("unexpectedly raised" ("Expected some pushback" (kind Websocket))) |}];
+        ("unexpectedly raised" ("Expected some pushback" (kind Websocket)))
+        |}];
       return ()
     ;;
   end)
