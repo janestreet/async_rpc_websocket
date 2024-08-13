@@ -19,6 +19,7 @@ let implementations =
   Rpc.Implementations.create_exn
     ~on_unknown_rpc:`Raise
     ~implementations:[ Rpc.Rpc.implement rpc (fun () str -> return str) ]
+    ~on_exception:Log_on_background_exn
 ;;
 
 let serve () =

@@ -15,7 +15,7 @@ let%expect_test "serve_with_tcp_server" =
           (_ : Rpc_websocket.Rpc.Connection_initiated_from.t)
           (_ : Socket.Address.Inet.t)
           (_ : Rpc.Connection.t)
-          -> ())
+        -> ())
       ~implementations
       ()
   in
@@ -77,7 +77,8 @@ let%test_module "TCP vs Websocket Pipe Pushback" =
       ( Ivar.read ivar
       , Rpc.Implementations.create_exn
           ~implementations:[ implementation ]
-          ~on_unknown_rpc:`Raise )
+          ~on_unknown_rpc:`Raise
+          ~on_exception:Log_on_background_exn )
     ;;
 
     module Transport = struct
@@ -97,16 +98,16 @@ let%test_module "TCP vs Websocket Pipe Pushback" =
               ~on_handler_error:`Raise
               Tcp.Where_to_listen.of_port_chosen_by_os
               (fun (_ : Socket.Address.Inet.t) socket ->
-              let reader, writer = rw_of_sock socket in
-              let%bind connection =
-                Rpc.Connection.create
-                  reader
-                  writer
-                  ~implementations
-                  ~connection_state:(fun (_ : Rpc.Connection.t) -> ())
-                |> ok_exn_result
-              in
-              Rpc.Connection.close_finished connection)
+                 let reader, writer = rw_of_sock socket in
+                 let%bind connection =
+                   Rpc.Connection.create
+                     reader
+                     writer
+                     ~implementations
+                     ~connection_state:(fun (_ : Rpc.Connection.t) -> ())
+                   |> ok_exn_result
+                 in
+                 Rpc.Connection.close_finished connection)
           in
           let where_to_connect =
             Tcp.Where_to_connect.of_host_and_port
@@ -131,7 +132,7 @@ let%test_module "TCP vs Websocket Pipe Pushback" =
                   (_ : Rpc_websocket.Rpc.Connection_initiated_from.t)
                   (_ : Socket.Address.Inet.t)
                   (_ : Rpc.Connection.t)
-                  -> ())
+                -> ())
               ~implementations
               ()
           in
@@ -179,10 +180,7 @@ let%test_module "TCP vs Websocket Pipe Pushback" =
     ;;
 
     let test_transport kind =
-      Expect_test_helpers_async.require_does_not_raise_async
-        ~cr:CR_someday
-        [%here]
-        (fun () ->
+      Expect_test_helpers_async.require_does_not_raise_async ~cr:CR_someday (fun () ->
         match%map run kind with
         | `Pushback_occurred -> ()
         | `No_pushback ->

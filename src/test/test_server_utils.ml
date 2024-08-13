@@ -23,6 +23,7 @@ let implementations =
           print_s [%message "got query"];
           Deferred.unit)
       ]
+    ~on_exception:Log_on_background_exn
 ;;
 
 let send_websocket_request ~port =

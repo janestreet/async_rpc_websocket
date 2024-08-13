@@ -31,7 +31,10 @@ let send_websocket_request port query =
 
 let create_server implementations =
   let implementations =
-    Rpc.Implementations.create_exn ~implementations ~on_unknown_rpc:`Raise
+    Rpc.Implementations.create_exn
+      ~implementations
+      ~on_unknown_rpc:`Raise
+      ~on_exception:Log_on_background_exn
   in
   Rpc_websocket.Rpc.serve
     ()

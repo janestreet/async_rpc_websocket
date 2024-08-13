@@ -47,9 +47,9 @@ let handler_common
     Option.map
       should_process_request
       ~f:(fun should_process_request inet header ~is_websocket_request ->
-      should_process_request
-        inet
-        (Connection_source.Web (header, `is_websocket_request is_websocket_request)))
+        should_process_request
+          inet
+          (Connection_source.Web (header, `is_websocket_request is_websocket_request)))
   in
   Cohttp_async_websocket.Server.(
     create
@@ -57,11 +57,11 @@ let handler_common
       ~non_ws_request:(http_handler extra_info)
       ?should_process_request
       (fun ~inet ~subprotocol request ->
-      return
-        (On_connection.create (fun websocket ->
-           let transport = Websocket.transport websocket in
-           let%bind () = f ~inet ~subprotocol request transport in
-           Rpc.Transport.close transport))))
+         return
+           (On_connection.create (fun websocket ->
+              let transport = Websocket.transport websocket in
+              let%bind () = f ~inet ~subprotocol request transport in
+              Rpc.Transport.close transport))))
 ;;
 
 let handler
