@@ -19,8 +19,7 @@ let%expect_test "serve_with_tcp_server" =
       ~implementations
       ()
   in
-  let%bind rpc_server = rpc_server
-  and web_server = web_server in
+  let%bind rpc_server and web_server in
   let rpc_port = Tcp.Server.listening_on rpc_server in
   let web_port = Cohttp_async.Server.listening_on web_server in
   let%bind () =
@@ -158,7 +157,7 @@ let%test_module "TCP vs Websocket Pipe Pushback" =
       let%bind client_pipe_reader, (_ : Rpc.Pipe_rpc.Metadata.t) =
         Rpc.Pipe_rpc.dispatch_exn rpc client ()
       in
-      let%bind pipe = pipe in
+      let%bind pipe in
       return { server_pipe_writer = pipe; client_pipe_reader }
     ;;
 
