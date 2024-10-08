@@ -30,7 +30,7 @@ type raw_http_handler =
 type should_process_request =
   Socket.Address.Inet.t
   -> (Cohttp.Header.t * [ `is_websocket_request of bool ]) Connection_source.t
-  -> unit Or_error.t
+  -> unit Deferred.Or_error.t
 
 type 'l tcp_server = (Socket.Address.Inet.t, 'l) Tcp.Server.t Deferred.t
 type 'l ws_server = (Socket.Address.Inet.t, 'l) Cohttp_async.Server.t Deferred.t
@@ -187,7 +187,8 @@ let serve_with_tcp_server
   in
   let auth_opt_to_tcp_auth auth_opt =
     Option.map auth_opt ~f:(fun should_process_request inet ->
-      Or_error.is_ok (should_process_request inet Connection_source.Plain_tcp))
+      let%bind result = should_process_request inet Connection_source.Plain_tcp in
+      Or_error.is_ok result |> Deferred.return)
   in
   let tcp_server =
     Rpc.Connection.serve

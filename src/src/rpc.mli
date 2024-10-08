@@ -30,7 +30,7 @@ type raw_http_handler =
 type should_process_request =
   Socket.Address.Inet.t
   -> (Cohttp.Header.t * [ `is_websocket_request of bool ]) Connection_source.t
-  -> unit Or_error.t
+  -> unit Deferred.Or_error.t
 
 type 'l tcp_server = (Socket.Address.Inet.t, 'l) Tcp.Server.t Deferred.t
 type 'l ws_server = (Socket.Address.Inet.t, 'l) Cohttp_async.Server.t Deferred.t
