@@ -30,12 +30,13 @@ type raw_http_handler =
 type should_process_request =
   Socket.Address.Inet.t
   -> (Cohttp.Header.t * [ `is_websocket_request of bool ]) Connection_source.t
-  -> unit Or_error.t
+  -> unit Deferred.Or_error.t
 
 type 'l tcp_server = (Socket.Address.Inet.t, 'l) Tcp.Server.t Deferred.t
 type 'l ws_server = (Socket.Address.Inet.t, 'l) Cohttp_async.Server.t Deferred.t
 
 let default_http_handler _ ~body:_ _ _ = Cohttp_async.Server.respond (`Code 501)
+let always_provide_rpc_shapes = true
 
 let handler_common
   ?should_process_request
@@ -90,6 +91,7 @@ let handler
         ~implementations
         ~description
         ~connection_state
+        ~provide_rpc_shapes:always_provide_rpc_shapes
         transport
     in
     match connection with
@@ -187,7 +189,8 @@ let serve_with_tcp_server
   in
   let auth_opt_to_tcp_auth auth_opt =
     Option.map auth_opt ~f:(fun should_process_request inet ->
-      Or_error.is_ok (should_process_request inet Connection_source.Plain_tcp))
+      let%bind result = should_process_request inet Connection_source.Plain_tcp in
+      Or_error.is_ok result |> Deferred.return)
   in
   let tcp_server =
     Rpc.Connection.serve
@@ -195,6 +198,7 @@ let serve_with_tcp_server
       ~implementations
       ~initial_connection_state
       ~where_to_listen:where_to_listen_for_tcp
+      ~provide_rpc_shapes:always_provide_rpc_shapes
       ?max_connections
       ?backlog
       ?max_message_size
@@ -209,6 +213,9 @@ let serve_with_tcp_server
 let connection_create ?handshake_timeout ?heartbeat_config transport =
   Async_rpc_kernel.Rpc.Connection.create
     ~connection_state:(fun _ -> ())
+    ~provide_rpc_shapes:always_provide_rpc_shapes
+      (* No-op right now since there are no client implementations but we want to send rpc
+         shapes in the future if there are. *)
     ?handshake_timeout
     ?heartbeat_config
     transport
