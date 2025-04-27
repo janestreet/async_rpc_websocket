@@ -37,12 +37,12 @@ type 'l ws_server = (Socket.Address.Inet.t, 'l) Cohttp_async.Server.t Deferred.t
 
 (** There are a few parameters common to the functions below:
 
-    - [http_handler] describes how to handle non-websocket HTTP requests.
-      Defaults to always returning code 501, (for servers that are only serving
-      web sockets and no other resources via HTTP)
+    - [http_handler] describes how to handle non-websocket HTTP requests. Defaults to
+      always returning code 501, (for servers that are only serving web sockets and no
+      other resources via HTTP)
 
-    - [should_process_request] allows the user to deny access for a given
-      request, before handling any RPCs, or serving web requests from a client
+    - [should_process_request] allows the user to deny access for a given request, before
+      handling any RPCs, or serving web requests from a client
 
     - [on_handshake_error] defaults to [`Ignore]. *)
 
@@ -56,7 +56,7 @@ val handler
         -> Socket.Address.Inet.t
         -> Async.Rpc.Connection.t
         -> 'connection_state)
-  -> ?http_handler:('connection -> http_handler) (** [http_handler]  *)
+  -> ?http_handler:('connection -> http_handler) (** [http_handler] *)
   -> ?handshake_timeout:Time_float.Span.t
   -> ?heartbeat_config:Async.Rpc.Connection.Heartbeat_config.t
   -> ?should_process_request:should_process_request
@@ -64,8 +64,7 @@ val handler
        [ `Ignore | `Raise | `Call of Socket.Address.Inet.t -> Exn.t -> unit ]
   -> 'connection
      (** The ['connection] argument allows a wrapper for [handler] to pass extra
-      information to the [initial_connection_state] and [http_handler]
-      callbacks. *)
+         information to the [initial_connection_state] and [http_handler] callbacks. *)
   -> raw_http_handler
 
 (** Serves both HTTP/Websockets and regular RPCs via TCP server. *)
@@ -128,11 +127,10 @@ val client
   -> Async.Rpc.Connection.t Deferred.Or_error.t
 
 module Transport : sig
-  (** These functions are similar to the [handler] and [server] function in the
-      parent module. The difference is that the caller of these functions is
-      expected to construct (and also close) their own [Rpc.Connection.t] from
-      the given transport (which will itself be closed after the callback
-      returns).
+  (** These functions are similar to the [handler] and [server] function in the parent
+      module. The difference is that the caller of these functions is expected to
+      construct (and also close) their own [Rpc.Connection.t] from the given transport
+      (which will itself be closed after the callback returns).
 
       This module is analogous to [Async.Rpc.Transport.Tcp]. *)
 
@@ -143,7 +141,7 @@ module Transport : sig
     -> unit Deferred.t
 
   val handler
-    :  ?http_handler:('connection -> http_handler) (** [http_handler]  *)
+    :  ?http_handler:('connection -> http_handler) (** [http_handler] *)
     -> ?should_process_request:should_process_request
     -> callback
     -> 'connection
