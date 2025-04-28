@@ -65,12 +65,15 @@ module%test [@name "TCP vs Websocket Pipe Pushback"] _ = struct
   let implementations () =
     let ivar = Ivar.create () in
     let implementation =
-      Rpc.Pipe_rpc.implement rpc (fun () () ->
-        let pipe_r, pipe_w = Pipe.create () in
-        Pipe.set_size_budget pipe_w 1;
-        Pipe.set_size_budget pipe_r 1;
-        Ivar.fill_exn ivar pipe_w;
-        return (Ok pipe_r))
+      Rpc.Pipe_rpc.implement
+        rpc
+        (fun () () ->
+          let pipe_r, pipe_w = Pipe.create () in
+          Pipe.set_size_budget pipe_w 1;
+          Pipe.set_size_budget pipe_r 1;
+          Ivar.fill_exn ivar pipe_w;
+          return (Ok pipe_r))
+        ~leave_open_on_exception:true
     in
     ( Ivar.read ivar
     , Rpc.Implementations.create_exn
