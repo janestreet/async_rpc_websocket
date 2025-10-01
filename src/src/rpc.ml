@@ -72,6 +72,7 @@ let handler
   ?http_handler
   ?handshake_timeout
   ?heartbeat_config
+  ?heartbeat_timeout_style
   ?should_process_request
   ?(on_handshake_error = `Ignore)
   extra_info
@@ -88,6 +89,7 @@ let handler
         ?handshake_timeout:
           (Option.map handshake_timeout ~f:Time_ns.Span.of_span_float_round_nearest)
         ?heartbeat_config
+        ?heartbeat_timeout_style
         ~implementations
         ~description
         ~connection_state
@@ -113,6 +115,7 @@ let serve
   ?http_handler
   ?handshake_timeout
   ?heartbeat_config
+  ?heartbeat_timeout_style
   ?should_process_request
   ?on_handshake_error
   ?(on_handler_error = `Ignore)
@@ -137,6 +140,7 @@ let serve
       ?http_handler
       ?handshake_timeout
       ?heartbeat_config
+      ?heartbeat_timeout_style
       ?should_process_request
       ?on_handshake_error
       ()
@@ -160,6 +164,7 @@ let serve_with_tcp_server
   ?http_handler
   ?handshake_timeout
   ?heartbeat_config
+  ?heartbeat_timeout_style
   ?should_process_request
   ?on_handshake_error
   ?on_handler_error
@@ -177,6 +182,7 @@ let serve_with_tcp_server
       ?http_handler
       ?handshake_timeout
       ?heartbeat_config
+      ?heartbeat_timeout_style
       ?should_process_request
       ?on_handshake_error
       ?on_handler_error
@@ -205,12 +211,18 @@ let serve_with_tcp_server
       ?make_transport
       ?handshake_timeout
       ?heartbeat_config
+      ?heartbeat_timeout_style
       ?auth:(auth_opt_to_tcp_auth should_process_request)
   in
   tcp_server, ws_server
 ;;
 
-let connection_create ?handshake_timeout ?heartbeat_config transport =
+let connection_create
+  ?handshake_timeout
+  ?heartbeat_config
+  ?heartbeat_timeout_style
+  transport
+  =
   Async_rpc_kernel.Rpc.Connection.create
     ~connection_state:(fun _ -> ())
     ~provide_rpc_shapes:always_provide_rpc_shapes
@@ -218,15 +230,20 @@ let connection_create ?handshake_timeout ?heartbeat_config transport =
          shapes in the future if there are. *)
     ?handshake_timeout
     ?heartbeat_config
+    ?heartbeat_timeout_style
     transport
   >>| Or_error.of_exn_result
 ;;
 
-let client ?headers ?handshake_timeout ?heartbeat_config uri =
+let client ?headers ?handshake_timeout ?heartbeat_config ?heartbeat_timeout_style uri =
   let open Deferred.Or_error.Let_syntax in
   let%bind _resp, websocket = Cohttp_async_websocket.Client.create ?headers uri in
   let transport = Websocket.transport websocket in
-  connection_create ?handshake_timeout ?heartbeat_config transport
+  connection_create
+    ?handshake_timeout
+    ?heartbeat_config
+    ?heartbeat_timeout_style
+    transport
 ;;
 
 module Transport = struct

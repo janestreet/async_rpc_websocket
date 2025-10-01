@@ -59,6 +59,7 @@ val handler
   -> ?http_handler:('connection -> http_handler) (** [http_handler] *)
   -> ?handshake_timeout:Time_float.Span.t
   -> ?heartbeat_config:Async.Rpc.Connection.Heartbeat_config.t
+  -> ?heartbeat_timeout_style:Async.Rpc.Connection.Heartbeat_timeout_style.t
   -> ?should_process_request:should_process_request
   -> ?on_handshake_error:
        [ `Ignore | `Raise | `Call of Socket.Address.Inet.t -> Exn.t -> unit ]
@@ -83,6 +84,7 @@ val serve_with_tcp_server
   -> ?http_handler:(unit -> http_handler)
   -> ?handshake_timeout:Time_float.Span.t
   -> ?heartbeat_config:Async.Rpc.Connection.Heartbeat_config.t
+  -> ?heartbeat_timeout_style:Async.Rpc.Connection.Heartbeat_timeout_style.t
   -> ?should_process_request:should_process_request
   -> ?on_handshake_error:
        [ `Ignore | `Raise | `Call of Socket.Address.Inet.t -> Exn.t -> unit ]
@@ -107,6 +109,7 @@ val serve
   -> ?http_handler:(unit -> http_handler)
   -> ?handshake_timeout:Time_float.Span.t
   -> ?heartbeat_config:Async.Rpc.Connection.Heartbeat_config.t
+  -> ?heartbeat_timeout_style:Async.Rpc.Connection.Heartbeat_timeout_style.t
   -> ?should_process_request:should_process_request
   -> ?on_handshake_error:
        [ `Ignore | `Raise | `Call of Socket.Address.Inet.t -> Exn.t -> unit ]
@@ -123,6 +126,7 @@ val client
   :  ?headers:Cohttp.Header.t
   -> ?handshake_timeout:Time_ns.Span.t
   -> ?heartbeat_config:Async.Rpc.Connection.Heartbeat_config.t
+  -> ?heartbeat_timeout_style:Async.Rpc.Connection.Heartbeat_timeout_style.t
   -> Uri.t
   -> Async.Rpc.Connection.t Deferred.Or_error.t
 
