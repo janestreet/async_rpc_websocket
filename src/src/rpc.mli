@@ -1,13 +1,6 @@
 open! Core
 open! Async
 
-module Connection_source : sig
-  type 'a t =
-    | Web of 'a
-    | Plain_tcp
-  [@@deriving sexp_of]
-end
-
 module Connection_initiated_from : sig
   type t =
     | Websocket_request of Cohttp_async.Request.t
@@ -27,11 +20,6 @@ type raw_http_handler =
   -> Cohttp_async.Request.t
   -> Cohttp_async.Server.response_action Deferred.t
 
-type should_process_request =
-  Socket.Address.Inet.t
-  -> (Cohttp.Header.t * [ `is_websocket_request of bool ]) Connection_source.t
-  -> unit Deferred.Or_error.t
-
 type 'l tcp_server = (Socket.Address.Inet.t, 'l) Tcp.Server.t Deferred.t
 type 'l ws_server = (Socket.Address.Inet.t, 'l) Cohttp_async.Server.t Deferred.t
 
@@ -48,7 +36,7 @@ type 'l ws_server = (Socket.Address.Inet.t, 'l) Cohttp_async.Server.t Deferred.t
 
 (** This returns a http handler that can be added into an existing cohttp server *)
 val handler
-  :  ?description:Info.t
+  :  ?description:Info.Portable.t
   -> implementations:'connection_state Async.Rpc.Implementations.t
   -> initial_connection_state:
        ('connection
@@ -60,7 +48,7 @@ val handler
   -> ?handshake_timeout:Time_float.Span.t
   -> ?heartbeat_config:Async.Rpc.Connection.Heartbeat_config.t
   -> ?heartbeat_timeout_style:Async.Rpc.Connection.Heartbeat_timeout_style.t
-  -> ?should_process_request:should_process_request
+  -> ?should_process_request:Should_process_request.t
   -> ?on_handshake_error:
        [ `Ignore | `Raise | `Call of Socket.Address.Inet.t -> Exn.t -> unit ]
   -> 'connection
@@ -85,7 +73,7 @@ val serve_with_tcp_server
   -> ?handshake_timeout:Time_float.Span.t
   -> ?heartbeat_config:Async.Rpc.Connection.Heartbeat_config.t
   -> ?heartbeat_timeout_style:Async.Rpc.Connection.Heartbeat_timeout_style.t
-  -> ?should_process_request:should_process_request
+  -> ?should_process_request:Should_process_request.t
   -> ?on_handshake_error:
        [ `Ignore | `Raise | `Call of Socket.Address.Inet.t -> Exn.t -> unit ]
   -> ?on_handler_error:
@@ -110,7 +98,7 @@ val serve
   -> ?handshake_timeout:Time_float.Span.t
   -> ?heartbeat_config:Async.Rpc.Connection.Heartbeat_config.t
   -> ?heartbeat_timeout_style:Async.Rpc.Connection.Heartbeat_timeout_style.t
-  -> ?should_process_request:should_process_request
+  -> ?should_process_request:Should_process_request.t
   -> ?on_handshake_error:
        [ `Ignore | `Raise | `Call of Socket.Address.Inet.t -> Exn.t -> unit ]
   -> ?on_handler_error:
@@ -146,7 +134,7 @@ module Transport : sig
 
   val handler
     :  ?http_handler:('connection -> http_handler) (** [http_handler] *)
-    -> ?should_process_request:should_process_request
+    -> ?should_process_request:Should_process_request.t
     -> callback
     -> 'connection
     -> raw_http_handler
@@ -154,7 +142,7 @@ module Transport : sig
   val serve
     :  where_to_listen:(Socket.Address.Inet.t, 'l) Tcp.Where_to_listen.t
     -> ?http_handler:(unit -> http_handler)
-    -> ?should_process_request:should_process_request
+    -> ?should_process_request:Should_process_request.t
     -> ?on_handler_error:
          [ `Raise | `Ignore | `Call of Socket.Address.Inet.t -> exn -> unit ]
     -> ?mode:Conduit_async.server

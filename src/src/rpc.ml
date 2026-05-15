@@ -1,13 +1,6 @@
 open Core
 open Async
 
-module Connection_source = struct
-  type 'a t =
-    | Web of 'a
-    | Plain_tcp
-  [@@deriving sexp_of]
-end
-
 module Connection_initiated_from = struct
   type t =
     | Websocket_request of Cohttp.Request.t
@@ -26,11 +19,6 @@ type raw_http_handler =
   -> Socket.Address.Inet.t
   -> Cohttp_async.Request.t
   -> Cohttp_async.Server.response_action Deferred.t
-
-type should_process_request =
-  Socket.Address.Inet.t
-  -> (Cohttp.Header.t * [ `is_websocket_request of bool ]) Connection_source.t
-  -> unit Deferred.Or_error.t
 
 type 'l tcp_server = (Socket.Address.Inet.t, 'l) Tcp.Server.t Deferred.t
 type 'l ws_server = (Socket.Address.Inet.t, 'l) Cohttp_async.Server.t Deferred.t
@@ -66,7 +54,7 @@ let handler_common
 ;;
 
 let handler
-  ?(description = Info.of_string "HTTP (WS) server")
+  ?(description = Info.Portable.of_string "HTTP (WS) server")
   ~implementations
   ~initial_connection_state
   ?http_handler
@@ -130,7 +118,7 @@ let serve
       | None | Some `TCP -> "HTTP (WS) server"
       | Some (`OpenSSL _) | Some (`OpenSSL_with_trust_chain _) -> "HTTPS (WSS) server"
     in
-    Info.of_string info
+    Info.Portable.of_string info
   in
   let handler =
     handler
